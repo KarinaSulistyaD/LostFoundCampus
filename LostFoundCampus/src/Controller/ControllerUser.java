@@ -1,0 +1,61 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package Controller;
+
+import Model.User.DAOUser;
+import Model.User.ModelUser;
+/**
+ *
+ * @author karina
+ */
+public class ControllerUser {
+
+    DAOUser daoUser;
+
+    public ControllerUser(){
+        daoUser = new DAOUser();
+    }
+
+    public void insert(ModelUser user){
+        daoUser.insert(user);
+    }
+    
+    public void register(
+            String nama,
+            String username,
+            String password,
+            String confirm
+    ) {
+
+        if(
+                nama.isEmpty() ||
+                username.isEmpty() ||
+                password.isEmpty() ||
+                confirm.isEmpty()
+        ){
+
+            throw new IllegalArgumentException(
+                    "Semua field harus diisi!"
+            );
+        }
+
+        if(!password.equals(confirm)){
+
+            throw new IllegalArgumentException(
+                    "Konfirmasi password tidak cocok!"
+            );
+        }
+
+        ModelUser user = new ModelUser();
+
+        user.setNama(nama);
+
+        user.setUsername(username);
+
+        user.setPassword(password);
+
+        daoUser.insert(user);
+    }
+}
