@@ -140,7 +140,6 @@ public class DashboardAdmin extends AppFrame {
         pageTitle.setFont(AppTheme.SECTION_TITLE_FONT);
         pageTitle.setForeground(AppTheme.TEXT_PRIMARY);
 
-        JLabel userIcon = new JLabel("👤");
         JLabel userInfo = new JLabel("Administrator");
         userInfo.setFont(AppTheme.LABEL_FONT);
         userInfo.setForeground(AppTheme.PRIMARY);
@@ -162,7 +161,6 @@ public class DashboardAdmin extends AppFrame {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(0, 4, 0, 4);
-        userBadge.add(userIcon, gbc);
         userBadge.add(userInfo, gbc);
 
         topBar.add(pageTitle, BorderLayout.WEST);
@@ -211,10 +209,6 @@ public class DashboardAdmin extends AppFrame {
             fb.addActionListener(e -> backToParent());
         }
     }
-
-    // ============================================================
-    //  Fungsi lama — tidak diubah
-    // ============================================================
 
     private JButton makeSidebarBtn(String text, int y) {
         JButton btn = new JButton(text) {
