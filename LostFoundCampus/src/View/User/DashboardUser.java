@@ -1,35 +1,45 @@
 package View.User;
 
+import Controller.ControllerBarang;
+import Controller.ControllerClaimRequest;
+import Model.Claim.ModelClaimRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 import Model.User.UserSession;
 import View.Admin.InputBarang;
 import View.Component.AppFrame;
 import View.Component.AppLabelFactory;
 import View.Component.AppTheme;
-
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class DashboardUser extends AppFrame {
-
+ 
+    private JLabel lblTotalValue;
+    private JLabel lblHilangValue;
+    private JLabel lblDitemukanValue;
+    private JLabel lblApprovedValue;
+    private JLabel lblPendingValue;
+ 
     public DashboardUser() { this(null); }
-
+ 
     public DashboardUser(JFrame parentFrame) {
         super("Dashboard User", AppTheme.WINDOW_DASHBOARD, parentFrame);
         setLayout(new BorderLayout());
         setBackground(AppTheme.BACKGROUND);
-
+ 
         // ======== SIDEBAR ========
         JPanel sidebar = new JPanel(null) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Gradient sidebar
                 GradientPaint gp = new GradientPaint(0, 0, AppTheme.SIDEBAR, 0, getHeight(), new Color(14, 22, 50));
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                // Right accent line
                 g2.setColor(new Color(67, 97, 238, 60));
                 g2.fillRect(getWidth() - 2, 0, 2, getHeight());
                 g2.dispose();
@@ -37,13 +47,12 @@ public class DashboardUser extends AppFrame {
         };
         sidebar.setPreferredSize(new Dimension(230, 0));
         sidebar.setBackground(AppTheme.SIDEBAR);
-
+ 
         // Logo area
         JPanel logoPanel = new JPanel(new BorderLayout());
         logoPanel.setBounds(0, 0, 230, 85);
         logoPanel.setOpaque(false);
-
-        // Colored logo badge
+ 
         JLabel logoIcon = new JLabel("L&F") {
             @Override
             protected void paintComponent(Graphics g) {
@@ -60,28 +69,27 @@ public class DashboardUser extends AppFrame {
             }
         };
         logoIcon.setPreferredSize(new Dimension(40, 40));
-
+ 
         JLabel logoText = new JLabel("L&F Kampus");
         logoText.setFont(new Font("Segoe UI", Font.BOLD, 15));
         logoText.setForeground(Color.WHITE);
         JLabel logoSub = new JLabel("User Panel");
         logoSub.setFont(AppTheme.SMALL_FONT);
         logoSub.setForeground(new Color(148, 163, 184));
-
+ 
         JPanel textBox = new JPanel();
         textBox.setLayout(new BoxLayout(textBox, BoxLayout.Y_AXIS));
         textBox.setOpaque(false);
         textBox.add(logoText);
         textBox.add(Box.createVerticalStrut(2));
         textBox.add(logoSub);
-
+ 
         JPanel logoRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 22));
         logoRow.setOpaque(false);
         logoRow.add(logoIcon);
         logoRow.add(textBox);
         logoPanel.add(logoRow, BorderLayout.CENTER);
-
-        // Separator
+ 
         JPanel sep = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -91,19 +99,17 @@ public class DashboardUser extends AppFrame {
         };
         sep.setOpaque(false);
         sep.setBounds(0, 83, 230, 2);
-
-        // Menu label
+ 
         JLabel lblMenu = new JLabel("  NAVIGASI");
         lblMenu.setFont(new Font("Segoe UI", Font.BOLD, 10));
         lblMenu.setForeground(new Color(99, 179, 237, 160));
         lblMenu.setBounds(20, 100, 190, 18);
-
-        JButton btnLihat    = makeSidebarBtn("Lihat Barang",  120);
-        JButton btnInput    = makeSidebarBtn("Input Barang",  165);
-        JButton btnRiwayat  = makeSidebarBtn("Riwayat Saya",  210);
-        JButton btnStatistik= makeSidebarBtn("Statistik Saya",255);
-
-        // Divider
+ 
+        JButton btnLihat     = makeSidebarBtn("Lihat Barang", 120);
+        JButton btnInput     = makeSidebarBtn("Input Barang", 165);
+        JButton btnRiwayat   = makeSidebarBtn("Riwayat & Klaim", 210);
+        JButton btnStatistik = makeSidebarBtn("Statistik Saya", 255);
+ 
         JPanel sep2 = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -112,17 +118,17 @@ public class DashboardUser extends AppFrame {
             }
         };
         sep2.setOpaque(false);
-        sep2.setBounds(0, 310, 230, 2);
-
-        JButton btnLogout = makeSidebarBtn("Logout", 330);
+        sep2.setBounds(0, 308, 230, 2);
+ 
+        JButton btnLogout = makeSidebarBtn("Logout", 325);
         btnLogout.setForeground(new Color(252, 165, 165));
-
+ 
         JButton btnBack = null;
         if (hasParentFrame()) {
-            btnBack = makeSidebarBtn("Kembali", 375);
+            btnBack = makeSidebarBtn("Kembali", 370);
             btnBack.setForeground(new Color(165, 243, 252));
         }
-
+ 
         sidebar.add(logoPanel);
         sidebar.add(sep);
         sidebar.add(lblMenu);
@@ -133,11 +139,11 @@ public class DashboardUser extends AppFrame {
         sidebar.add(sep2);
         sidebar.add(btnLogout);
         if (btnBack != null) sidebar.add(btnBack);
-
+ 
         // ======== CONTENT AREA ========
         JPanel content = new JPanel(null);
         content.setBackground(AppTheme.BACKGROUND);
-
+ 
         // Top bar
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBounds(0, 0, 770, 66);
@@ -145,18 +151,17 @@ public class DashboardUser extends AppFrame {
         topBar.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.BORDER),
             BorderFactory.createEmptyBorder(0, 24, 0, 24)));
-
+ 
         JLabel pageTitle = new JLabel("Dashboard User");
         pageTitle.setFont(AppTheme.SECTION_TITLE_FONT);
         pageTitle.setForeground(AppTheme.TEXT_PRIMARY);
-
-        // Badge nama user
+ 
         String namaUser = (UserSession.getCurrentUser() != null && UserSession.getCurrentUser().getNama() != null)
                 ? UserSession.getCurrentUser().getNama() : "User";
         JLabel userInfo = new JLabel(namaUser);
         userInfo.setFont(AppTheme.LABEL_FONT);
         userInfo.setForeground(AppTheme.PRIMARY);
-
+ 
         JPanel userBadge = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -172,38 +177,48 @@ public class DashboardUser extends AppFrame {
         };
         userBadge.setOpaque(false);
         userBadge.setPreferredSize(new Dimension(160, 66));
-
+ 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(0, 4, 0, 4);
         userBadge.add(userInfo, gbc);
-
+ 
         topBar.add(pageTitle, BorderLayout.WEST);
         topBar.add(userBadge, BorderLayout.EAST);
         content.add(topBar);
-
-        // Welcome
-        JLabel welcome = AppLabelFactory.body("Selamat datang di Sistem Lost & Found Kampus");
+ 
+        JLabel welcome = AppLabelFactory.body(
+                "Selamat datang di Sistem Lost & Found Kampus"
+        );
         welcome.setForeground(AppTheme.TEXT_SECONDARY);
         welcome.setBounds(28, 86, 600, 22);
         content.add(welcome);
-
-        // Stat cards (baris 1)
-        content.add(makeStatCard("Lihat Barang",   AppTheme.PRIMARY,  28,  126, 200, 110));
-        content.add(makeStatCard("Input Barang",   AppTheme.SUCCESS,  248, 126, 200, 110));
-        content.add(makeStatCard("Riwayat Saya",   AppTheme.ACCENT,   468, 126, 200, 110));
-
-        // Stat cards (baris 2)
-        content.add(makeStatCard("Statistik Saya", AppTheme.WARNING,  28,  256, 200, 110));
-        content.add(makeStatCard("Claim Barang",   new Color(139, 92, 246), 248, 256, 200, 110));
-
+ 
+        // STAT CARDS (JLabel disimpan agar bisa di-refresh)
+        lblTotalValue     = new JLabel("0", SwingConstants.CENTER);
+        lblHilangValue    = new JLabel("0", SwingConstants.CENTER);
+        lblDitemukanValue = new JLabel("0", SwingConstants.CENTER);
+        lblApprovedValue  = new JLabel("0", SwingConstants.CENTER);
+        lblPendingValue   = new JLabel("0", SwingConstants.CENTER);
+ 
+        // Baris 1: 3 card statistik barang
+        content.add(makeStatCard("Total Barang", lblTotalValue, AppTheme.PRIMARY, 28,  126, 200, 110));
+        content.add(makeStatCard("Barang Hilang", lblHilangValue, AppTheme.ACCENT, 248,  126, 200, 110));
+        content.add(makeStatCard("Barang Ditemukan", lblDitemukanValue, AppTheme.SUCCESS, 468,  126, 200, 110));
+        // Baris 2: Klaim Approved + Klaim Pending
+        content.add(makeStatCard("Klaim Approved", lblApprovedValue,  new Color(139, 92, 246), 28,  256, 200, 110));
+        content.add(makeStatCard("Klaim Pending", lblPendingValue,   AppTheme.WARNING, 248,  256, 200, 110));
+ 
+        // Load data awal
+        muatDataDashboard();
+ 
         // Info panel
         JPanel infoPanel = makeInfoPanel();
-        infoPanel.setBounds(28, 394, 640, 150);
+        infoPanel.setBounds(28, 390, 640, 160);
         content.add(infoPanel);
-
+ 
         add(sidebar, BorderLayout.WEST);
         add(content, BorderLayout.CENTER);
-
+ 
         // ======== ACTIONS ========
         btnLihat.addActionListener(e -> showChildFrame(new LihatBarang(this)));
         btnInput.addActionListener(e -> showChildFrame(new InputBarang(this)));
@@ -218,8 +233,136 @@ public class DashboardUser extends AppFrame {
             final JButton fb = btnBack;
             fb.addActionListener(e -> backToParent());
         }
+ 
+        // NOTIFIKASI OTOMATIS — hanya klo ada yang BELUM PERNAH DILIHAT
+        SwingUtilities.invokeLater(() -> {
+            ControllerClaimRequest ccrNotif = new ControllerClaimRequest();
+            List<ModelClaimRequest> allKlaim = ccrNotif.getClaimsByUserId(UserSession.getCurrentUserId());
+            List<ModelClaimRequest> belumDilihat = allKlaim.stream()
+                    .filter(r -> !r.getStatus().equalsIgnoreCase("Pending"))
+                    .filter(r -> !UserSession.isClaimSeen(r.getId()))
+                    .collect(Collectors.toList());
+ 
+            if (!belumDilihat.isEmpty()) {
+                tampilkanDialogNotifikasi(belumDilihat);
+                // Tandai semuanya sudah dilihat setelah dialog ditutup
+                for (ModelClaimRequest r : belumDilihat) {
+                    UserSession.markClaimSeen(r.getId());
+                }
+            }
+        });
     }
-
+ 
+    // Dialog notifikasi klaim yang baru direspon admin
+    private void tampilkanDialogNotifikasi(List<ModelClaimRequest> klaims) {
+        JDialog dialog = new JDialog(this, "Notifikasi Status Klaim", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(AppTheme.BACKGROUND);
+ 
+        // Header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(AppTheme.PRIMARY);
+        header.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
+ 
+        JLabel title = new JLabel("Ada update status klaim kamu!");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        title.setForeground(Color.WHITE);
+        header.add(title, BorderLayout.WEST);
+ 
+        JLabel sub = new JLabel(klaims.size() + " klaim baru direspon admin");
+        sub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        sub.setForeground(new Color(200, 220, 255));
+        header.add(sub, BorderLayout.EAST);
+        dialog.add(header, BorderLayout.NORTH);
+ 
+        // Tabel
+        String[] cols = {"Nama Barang", "Kategori", "Status", "Direview Oleh", "Tanggal Review"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+ 
+        for (ModelClaimRequest r : klaims) {
+            model.addRow(new Object[]{
+                r.getBarangName(),
+                r.getBarangCategory(),
+                r.getStatus(),
+                r.getReviewerName() != null ? r.getReviewerName() : "-",
+                r.getReviewedAt()   != null ? r.getReviewedAt()   : "-"
+            });
+        }
+ 
+        JTable table = new JTable(model);
+        table.setRowHeight(36);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setShowVerticalLines(false);
+        table.setGridColor(AppTheme.BORDER);
+        table.setSelectionBackground(AppTheme.PRIMARY_LIGHT);
+        table.setIntercellSpacing(new Dimension(0, 0));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+        table.getTableHeader().setBackground(AppTheme.TABLE_HEADER);
+        table.getTableHeader().setForeground(AppTheme.TEXT_SECONDARY);
+        table.getTableHeader().setPreferredSize(new Dimension(0, 38));
+ 
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t,
+                    Object value, boolean sel, boolean focus, int row, int col) {
+                super.getTableCellRendererComponent(t, value, sel, focus, row, col);
+                if (!sel) {
+                    setBackground(row % 2 == 0 ? AppTheme.SURFACE : AppTheme.TABLE_STRIPE);
+                }
+                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                String val = value != null ? value.toString() : "";
+                if (col == 2) {
+                    if ("Approved".equalsIgnoreCase(val)) {
+                        setForeground(AppTheme.SUCCESS);
+                        setFont(new Font("Segoe UI", Font.BOLD, 13));
+                        setText("Approved");
+                    } else if ("Rejected".equalsIgnoreCase(val)) {
+                        setForeground(AppTheme.DANGER);
+                        setFont(new Font("Segoe UI", Font.BOLD, 13));
+                        setText("Rejected");
+                    } else {
+                        setForeground(AppTheme.WARNING);
+                        setFont(new Font("Segoe UI", Font.PLAIN, 13));
+                    }
+                } else {
+                    setForeground(AppTheme.TEXT_PRIMARY);
+                    setFont(new Font("Segoe UI", Font.PLAIN, 13));
+                }
+                return this;
+            }
+        });
+ 
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setBorder(BorderFactory.createEmptyBorder(10, 14, 0, 14));
+        scroll.getViewport().setBackground(AppTheme.SURFACE);
+        dialog.add(scroll, BorderLayout.CENTER);
+ 
+        // Footer
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setBackground(AppTheme.BACKGROUND);
+        bottom.setBorder(BorderFactory.createEmptyBorder(10, 14, 14, 14));
+ 
+        JLabel note = new JLabel("Buka 'Riwayat & Klaim', lalu tab 'Status Klaim Saya' untuk detail lengkap!");
+        note.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        note.setForeground(AppTheme.TEXT_SECONDARY);
+        bottom.add(note, BorderLayout.WEST);
+ 
+        JButton btnTutup = new JButton("Mengerti");
+        btnTutup.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnTutup.setFocusPainted(false);
+        btnTutup.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnTutup.addActionListener(e -> dialog.dispose());
+        bottom.add(btnTutup, BorderLayout.EAST);
+        dialog.add(bottom, BorderLayout.SOUTH);
+ 
+        dialog.setSize(680, 360);
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+        dialog.setVisible(true);
+    }
+ 
     // ======== SIDEBAR BUTTON ========
     private JButton makeSidebarBtn(String text, int y) {
         JButton btn = new JButton(text) {
@@ -246,21 +389,19 @@ public class DashboardUser extends AppFrame {
         btn.setBounds(10, y, 210, 38);
         return btn;
     }
-
+ 
     // ======== STAT CARD ========
-    private JPanel makeStatCard(String label, Color color, int x, int y, int w, int h) {
+    private JPanel makeStatCard(String label, JLabel valueLabel, Color color, 
+            int x, int y, int w, int h) {
         JPanel card = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Shadow
                 g2.setColor(new Color(0, 0, 0, 14));
                 g2.fill(new RoundRectangle2D.Float(4, 6, w - 8, h - 6, 14, 14));
-                // Card background
                 g2.setColor(AppTheme.SURFACE);
                 g2.fill(new RoundRectangle2D.Float(0, 0, w - 4, h - 4, 14, 14));
-                // Left accent bar
                 g2.setColor(color);
                 g2.fill(new RoundRectangle2D.Float(0, 0, 4, h - 4, 4, 4));
                 g2.dispose();
@@ -269,16 +410,57 @@ public class DashboardUser extends AppFrame {
         };
         card.setBounds(x, y, w, h);
         card.setOpaque(false);
-        card.setBorder(BorderFactory.createEmptyBorder(16, 18, 12, 14));
-
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(AppTheme.CARD_TITLE_FONT);
-        lbl.setForeground(AppTheme.TEXT_PRIMARY);
-        card.add(lbl, BorderLayout.CENTER);
-
+        card.setBorder(BorderFactory.createEmptyBorder(10, 18, 10, 14));
+ 
+        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        valueLabel.setForeground(color);
+ 
+        JLabel lblTitle = new JLabel(label, SwingConstants.CENTER);
+        lblTitle.setFont(AppTheme.CARD_TITLE_FONT);
+        lblTitle.setForeground(AppTheme.TEXT_PRIMARY);
+ 
+        JPanel inner = new JPanel(new BorderLayout(0, 4));
+        inner.setOpaque(false);
+        inner.add(valueLabel, BorderLayout.CENTER);
+        inner.add(lblTitle, BorderLayout.SOUTH);
+        card.add(inner, BorderLayout.CENTER);
         return card;
     }
-
+ 
+    // ======== REFRESH DATA ========
+    private void muatDataDashboard() {
+        int uid = UserSession.getCurrentUserId();
+        ControllerBarang cb = new ControllerBarang();
+        ControllerClaimRequest ccr = new ControllerClaimRequest();
+ 
+        int totalSaya      = cb.getTotalByUserId(uid);
+        int totalHilang    = cb.getTotalByUserIdAndStatus(uid, "Hilang");
+        int totalDitemukan = cb.getTotalByUserIdAndStatus(uid, "Ditemukan");
+ 
+        List<ModelClaimRequest> semuaKlaim = ccr.getClaimsByUserId(uid);
+        long sudahApproved = semuaKlaim.stream()
+                .filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
+        long klaimPending  = semuaKlaim.stream()
+                .filter(r -> "Pending".equalsIgnoreCase(r.getStatus())).count();
+ 
+        lblTotalValue.setText(String.valueOf(totalSaya));
+        lblHilangValue.setText(String.valueOf(totalHilang));
+        lblDitemukanValue.setText(String.valueOf(totalDitemukan));
+        lblApprovedValue.setText(String.valueOf(sudahApproved));
+        lblPendingValue.setText(String.valueOf(klaimPending));
+    }
+ 
+    @Override
+    public void setVisible(boolean visible) {
+        if (visible) {
+            // Refresh data setiap kali dashboard ditampilkan kembali
+            if (lblTotalValue != null) {
+                muatDataDashboard();
+            }
+        }
+        super.setVisible(visible);
+    }
+ 
     // ======== INFO PANEL ========
     private JPanel makeInfoPanel() {
         JPanel p = new JPanel(null) {
@@ -291,7 +473,6 @@ public class DashboardUser extends AppFrame {
                 g2.setColor(AppTheme.BORDER);
                 g2.setStroke(new java.awt.BasicStroke(1));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 2, getHeight() - 2, 14, 14));
-                // Title bar
                 g2.setColor(AppTheme.PRIMARY_LIGHT);
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth() - 1, 36, 14, 14));
                 g2.fillRect(0, 22, getWidth() - 1, 14);
@@ -299,22 +480,23 @@ public class DashboardUser extends AppFrame {
             }
         };
         p.setOpaque(false);
-
+ 
         JLabel titleLbl = new JLabel("Panduan Penggunaan");
         titleLbl.setFont(AppTheme.LABEL_FONT);
         titleLbl.setForeground(AppTheme.PRIMARY);
         titleLbl.setBounds(16, 8, 400, 22);
         p.add(titleLbl);
-
+ 
         String[] tips = {
-            "\u2022 Gunakan menu Lihat Barang untuk melihat daftar barang",
-            "\u2022 Gunakan Input Barang untuk menambahkan barang baru",
-            "\u2022 Ajukan claim jika barang milikmu ditemukan",
+            "\u2022 Gunakan menu 'Lihat Barang' untuk melihat dan mengajukan klaim barang",
+            "\u2022 Gunakan menu 'Input Barang' untuk mendaftarkan barang hilang/temuan",
+            "\u2022 Cek menu 'Riwayat & Klaim', lalu tab 'Status Klaim Saya' untuk melihat semua status klaimmu",
+            "\u2022 Notifikasi muncul otomatis saat ada klaim yang baru direspon admin",
         };
         int ty = 50;
         for (String tip : tips) {
             JLabel l = AppLabelFactory.body(tip);
-            l.setBounds(16, ty, 600, 22);
+            l.setBounds(16, ty, 620, 22);
             p.add(l);
             ty += 28;
         }

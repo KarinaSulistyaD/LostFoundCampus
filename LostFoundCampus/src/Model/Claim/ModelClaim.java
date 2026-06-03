@@ -8,7 +8,6 @@ package Model.Claim;
  *
  * @author karina
  */
-
 public class ModelClaim {
 
     private int idClaim;

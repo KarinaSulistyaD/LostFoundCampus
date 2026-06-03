@@ -21,29 +21,35 @@ import java.util.logging.Logger;
 public class DAOUser implements InterfaceDAOUser {
 
     private static final Logger LOGGER = Logger.getLogger(DAOUser.class.getName());
-
+ 
     private static final String COL_ID = "id";
     private static final String COL_USERNAME = "username";
     private static final String COL_PASSWORD = "password";
     private static final String COL_NAMA = "nama";
     private static final String COL_ROLE = "role";
-
+ 
     private static final String SQL_SELECT_PREFIX = "SELECT ";
-    private static final String SQL_INSERT = "INSERT INTO users (username, password, nama, role) VALUES (?, ?, ?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO users (username, "
+            + "password, nama, role) VALUES (?, ?, ?, ?)";
     private static final String SELECT_COLUMNS = "id, username, password, nama, role";
-    private static final String SQL_GET_BY_ID = SQL_SELECT_PREFIX + SELECT_COLUMNS + " FROM users WHERE id = ?";
+    private static final String SQL_GET_BY_ID = SQL_SELECT_PREFIX + SELECT_COLUMNS
+            + " FROM users WHERE id = ?";
     private static final String SQL_GET_BY_USERNAME = SQL_SELECT_PREFIX + SELECT_COLUMNS
             + " FROM users WHERE username = ?";
-    private static final String SQL_GET_ALL = SQL_SELECT_PREFIX + SELECT_COLUMNS + " FROM users";
-    private static final String SQL_UPDATE = "UPDATE users SET username = ?, password = ?, nama = ?, role = ? WHERE id = ?";
+    private static final String SQL_GET_ALL = SQL_SELECT_PREFIX + SELECT_COLUMNS
+            + " FROM users";
+    private static final String SQL_UPDATE = "UPDATE users SET username = ?, "
+            + "password = ?, nama = ?, role = ? WHERE id = ?";
     private static final String SQL_DELETE = "DELETE FROM users WHERE id = ?";
-
+    private static final String SQL_EXISTS_USERNAME =
+            "SELECT 1 FROM users WHERE username = ?";
+ 
     private final Connection connection;
-
+ 
     public DAOUser() {
         this.connection = DatabaseConnection.getConnection();
     }
-
+ 
     @Override
     public void insert(ModelUser user) {
         try (PreparedStatement ps = connection.prepareStatement(SQL_INSERT)) {
@@ -56,10 +62,10 @@ public class DAOUser implements InterfaceDAOUser {
             logSqlError("insert user", e);
         }
     }
-
+ 
     @Override
     public ModelUser getById(int id) {
-        try (PreparedStatement ps = connection.prepareStatement(SQL_GET_BY_ID)) {
+        try (PreparedStatement ps = connection.prepareStatement(SQL_GET_BY_ID)){
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -70,7 +76,7 @@ public class DAOUser implements InterfaceDAOUser {
         }
         return null;
     }
-
+ 
     @Override
     public ModelUser getByUsername(String username) {
         try (PreparedStatement ps = connection.prepareStatement(SQL_GET_BY_USERNAME)) {
@@ -84,7 +90,7 @@ public class DAOUser implements InterfaceDAOUser {
         }
         return null;
     }
-
+ 
     @Override
     public List<ModelUser> getAll() {
         List<ModelUser> users = new ArrayList<>();
@@ -98,7 +104,7 @@ public class DAOUser implements InterfaceDAOUser {
         }
         return users;
     }
-
+ 
     @Override
     public void update(ModelUser user) {
         try (PreparedStatement ps = connection.prepareStatement(SQL_UPDATE)) {
@@ -112,7 +118,7 @@ public class DAOUser implements InterfaceDAOUser {
             logSqlError("update user", e);
         }
     }
-
+ 
     @Override
     public void delete(int id) {
         try (PreparedStatement ps = connection.prepareStatement(SQL_DELETE)) {
@@ -122,7 +128,22 @@ public class DAOUser implements InterfaceDAOUser {
             logSqlError("delete user", e);
         }
     }
-
+ 
+    /**
+     * Mengecek apakah username sudah terdaftar di database.
+     * Digunakan untuk validasi sebelum insert agar menghindari duplikat.
+     */
+    public boolean existsByUsername(String username) {
+        try (PreparedStatement ps = connection.prepareStatement(SQL_EXISTS_USERNAME)) {
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            logSqlError("check username exists", e);
+        }
+        return false;
+    }
+ 
     private static ModelUser mapUser(ResultSet rs, boolean includePassword) throws SQLException {
         ModelUser user = new ModelUser();
         user.setId(rs.getInt(COL_ID));
@@ -134,7 +155,7 @@ public class DAOUser implements InterfaceDAOUser {
         user.setRole(rs.getString(COL_ROLE));
         return user;
     }
-
+ 
     private static void logSqlError(String action, SQLException e) {
         LOGGER.log(Level.SEVERE, () -> "Failed to " + action + ": " + e.getMessage());
         LOGGER.log(Level.SEVERE, "SQL exception stacktrace", e);

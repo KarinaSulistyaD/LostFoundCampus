@@ -20,8 +20,7 @@ public final class AppTableFactory {
         table.setForeground(AppTheme.TEXT_PRIMARY);
         table.setIntercellSpacing(new Dimension(0, 0));
         table.setFillsViewportHeight(true);
-
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {   
             @Override
             public Component getTableCellRendererComponent(JTable t, Object value,
                     boolean isSelected, boolean hasFocus, int row, int col) {

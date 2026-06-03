@@ -28,10 +28,7 @@ public class DAOClaim {
         try {
             String query =
                     "INSERT INTO claim_barang("
-                    + "id_barang,"
-                    + "id_user,"
-                    + "alasan_claim,"
-                    + "status_claim"
+                    + "id_barang, id_user, alasan_claim, status_claim"
                     + ") VALUES (?,?,?,?)";
 
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -54,7 +51,6 @@ public class DAOClaim {
             String query = "SELECT * FROM claim_barang";
 
             Statement stmt = connection.createStatement();
-
             ResultSet rs = stmt.executeQuery(query);
 
             while(rs.next()){
@@ -131,16 +127,12 @@ public class DAOClaim {
     public void rejectClaim(int idClaim){
         try {
 
-            String query =
-                    "UPDATE claim_barang "
-                  + "SET status_claim='Rejected' "
+            String query = "UPDATE claim_barang SET status_claim='Rejected' "
                   + "WHERE id_claim=?";
 
             PreparedStatement stmt = connection.prepareStatement(query);
-
             stmt.setInt(1, idClaim);
             stmt.executeUpdate();
-
         } catch (Exception e) {
             e.printStackTrace();
         }

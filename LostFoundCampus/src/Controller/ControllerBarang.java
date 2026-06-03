@@ -48,13 +48,36 @@ public class ControllerBarang {
     public ModelBarang getById(int id){
         return daoBarang.getById(id);
     }
+    
     public int getTotalBarang(){
         return daoBarang.getTotalBarang();
     }
+    
     public int getTotalByStatus(String status){
         return daoBarang.getTotalByStatus(status);
     }
+    
     public List<ModelBarang> getReturnedBarang(){
         return daoBarang.getReturnedBarang();
+    }
+    
+    // Total barang yang dimiliki/dilaporkan oleh user tertentu
+    public int getTotalByUserId(int userId) {
+        return daoBarang.getTotalByUserId(userId);
+    }
+ 
+    // Total barang milik user berdasarkan status (Hilang/Ditemukan)
+    public int getTotalByUserIdAndStatus(int userId, String status) {
+        return daoBarang.getTotalByUserIdAndStatus(userId, status);
+    }
+ 
+    // Total barang yang berhasil diklaim oleh user (sebagai claimer)
+    public int getTotalApprovedClaimByUserId(int userId) {
+        return daoBarang.getTotalApprovedClaimByUserId(userId);
+    }
+ 
+    // Total barang berdasarkan status_claim (global, untuk admin)
+    public int getTotalByStatusClaim(String statusClaim) {
+        return daoBarang.getTotalByStatusClaim(statusClaim);
     }
 }

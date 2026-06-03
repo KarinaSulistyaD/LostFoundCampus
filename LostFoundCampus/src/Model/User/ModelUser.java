@@ -8,7 +8,6 @@ package Model.User;
  *
  * @author Ivaa
  */
-
 public class ModelUser {
 
     private int id;

@@ -40,9 +40,15 @@ public class ViewBarang extends AppFrame {
         // Back button in top bar
         if (hasParentFrame()) {
             JButton btnBackTop = AppButtonFactory.backButton();
-            btnBackTop.setPreferredSize(new Dimension(100, 38));
             btnBackTop.addActionListener(e -> backToParent());
-            topBar.add(btnBackTop, BorderLayout.EAST);
+            JPanel backWrapper = new JPanel();
+            backWrapper.setLayout(new BoxLayout(backWrapper, BoxLayout.Y_AXIS));
+            backWrapper.setOpaque(false);
+            backWrapper.add(Box.createVerticalGlue());      
+            btnBackTop.setAlignmentX(Component.CENTER_ALIGNMENT);
+            backWrapper.add(btnBackTop);                    
+            backWrapper.add(Box.createVerticalGlue());
+            topBar.add(backWrapper, BorderLayout.EAST);
         }
         add(topBar, BorderLayout.NORTH);
 
@@ -101,10 +107,6 @@ public class ViewBarang extends AppFrame {
         // TAMBAHAN: aksi tombol Riwayat & Statistik
         btnRiwayat.addActionListener(e -> showChildFrame(new StatistikAdmin(this)));
     }
-
-    // ============================================================
-    //  FUNGSI LAMA — tidak diubah sama sekali
-    // ============================================================
 
     private void loadTable() {
         tableBarang.setModel(new ModelTableBarang(new ControllerBarang().getAll()));

@@ -34,9 +34,9 @@ public class HomeView extends AppFrame implements HomeViewContract {
             AppTheme.TEXT_SECONDARY
         );
 
-        JButton btnLogin    = AppButtonFactory.primary("Login");
-        JButton btnRegister = AppButtonFactory.success("Daftar Akun");
-        JButton btnExit     = AppButtonFactory.danger("Keluar");
+        JButton btnLogin = AppButtonFactory.primary("Login");
+        JButton btnRegister = AppButtonFactory.accent("Daftar Akun");
+        JButton btnExit = AppButtonFactory.danger("Keluar");
 
         Dimension buttonSize = new Dimension(240, 40);
         for (JButton btn : new JButton[]{btnLogin, btnRegister, btnExit}) {
@@ -61,12 +61,24 @@ public class HomeView extends AppFrame implements HomeViewContract {
         btnExit.addActionListener(controller::handleExit);
     }
 
-    @Override public void openLogin()    { showChildFrame(new Login(this)); }
-    @Override public void openRegister() { showChildFrame(new Register(this)); }
-
-    @Override public boolean confirmExit() {
-        return JOptionPane.showConfirmDialog(this, "Keluar aplikasi?", "Konfirmasi", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+    @Override 
+    public void openLogin() { 
+        showChildFrame(new Login(this)); 
+    }
+    
+    @Override 
+    public void openRegister() { 
+        showChildFrame(new Register(this)); 
     }
 
-    @Override public void exitApplication() { System.exit(0); }
+    @Override 
+    public boolean confirmExit() {
+        return JOptionPane.showConfirmDialog(
+                this, 
+                "Keluar aplikasi?", "Konfirmasi", 
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+    }
+
+    @Override 
+    public void exitApplication() { System.exit(0); }
 }

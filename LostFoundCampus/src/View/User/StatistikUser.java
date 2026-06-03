@@ -5,6 +5,8 @@
 package View.User;
 
 import Controller.ControllerBarang;
+import Controller.ControllerClaimRequest;
+import Model.Claim.ModelClaimRequest;
 import Model.User.UserSession;
 import View.Component.AppButtonFactory;
 import View.Component.AppFrame;
@@ -14,18 +16,31 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.util.List;
-import Model.Barang.ModelBarang;
 /**
  *
  * @author Ivaa
  */
 public class StatistikUser extends AppFrame {
-    public StatistikUser() { 
-        this(null); 
+
+    // Label angka biar bisa di-update saat refresh tanpa buat window baru
+    private JLabel lblTotalValue;
+    private JLabel lblHilangValue;
+    private JLabel lblDitemukanValue;
+    private JLabel lblDiklaimValue;
+    private JLabel lblPendingValue;
+    private JLabel infoLabel;
+    private JLabel greeting;
+
+    // Ukuran card tetap sama seperti sebelumnya
+    private static final int CARD_W = 175;
+    private static final int CARD_H = 120;
+
+    public StatistikUser() {
+        this(null);
     }
 
     public StatistikUser(JFrame parentFrame) {
-        super("Statistik Saya", AppTheme.WINDOW_TABLE, parentFrame);
+        super("Statistik Saya", new Dimension(650, 520), parentFrame);
         setLayout(new BorderLayout());
         setBackground(AppTheme.BACKGROUND);
 
@@ -36,115 +51,180 @@ public class StatistikUser extends AppFrame {
             BorderFactory.createMatteBorder(0, 0, 1, 0, AppTheme.BORDER),
             BorderFactory.createEmptyBorder(0, 22, 0, 22)));
         topBar.setPreferredSize(new Dimension(0, 62));
-        topBar.add(AppLabelFactory.sectionTitle(
-                "Statistik Barang Saya"), BorderLayout.WEST
-        );
+        topBar.add(AppLabelFactory.sectionTitle("Statistik Barang Saya"), BorderLayout.WEST);
 
         if (hasParentFrame()) {
             JButton btnBackTop = AppButtonFactory.backButton();
             btnBackTop.addActionListener(e -> backToParent());
-            topBar.add(btnBackTop, BorderLayout.EAST);
+            JPanel backWrapper = new JPanel();
+            backWrapper.setLayout(new BoxLayout(backWrapper, BoxLayout.Y_AXIS));
+            backWrapper.setOpaque(false);
+            backWrapper.add(Box.createVerticalGlue());
+            btnBackTop.setAlignmentX(Component.CENTER_ALIGNMENT);
+            backWrapper.add(btnBackTop);
+            backWrapper.add(Box.createVerticalGlue());
+            topBar.add(backWrapper, BorderLayout.EAST);
         }
         add(topBar, BorderLayout.NORTH);
 
-        // ---- Content ----
-        JPanel content = new JPanel(null);
+        // ---- Content (BoxLayout vertikal, padding kiri-kanan) ----
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(AppTheme.BACKGROUND);
-
-        int uid = UserSession.getCurrentUserId();
-        ControllerBarang cb = new ControllerBarang();
-        List<ModelBarang> myBarang = cb.getAllByUserId(uid);
-
-        long totalSaya = myBarang.size();
-        long totalHilang = myBarang.stream().filter(b -> 
-                "Hilang".equalsIgnoreCase(b.getStatus())).count();
-        long totalDitemukan = myBarang.stream().filter(b -> 
-                "Ditemukan".equalsIgnoreCase(b.getStatus())).count();
-        long sudahDiklaim = myBarang.stream().filter(b -> 
-                "Sudah Diklaim".equalsIgnoreCase(b.getStatusClaim())).count();
+        content.setBorder(BorderFactory.createEmptyBorder(14, 20, 14, 20));
 
         String namaUser = UserSession.getCurrentUser() != null
                 ? UserSession.getCurrentUser().getNama() : "User";
 
         // Greeting
-        JLabel greeting = AppLabelFactory.body("Halo, " + namaUser 
-                + "! Berikut ringkasan barang Anda.");
+        greeting = AppLabelFactory.body("Halo, " + namaUser + "! Berikut ringkasan barang Anda.");
         greeting.setForeground(AppTheme.TEXT_SECONDARY);
-        greeting.setBounds(28, 20, 700, 22);
+        greeting.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(greeting);
+        content.add(Box.createVerticalStrut(12));
 
-        // Stat cards
-        content.add(makeStatCard("Total Barang Saya", String.valueOf(totalSaya), AppTheme.PRIMARY, 28,  60, 190, 120));
-        content.add(makeStatCard("Barang Hilang", String.valueOf(totalHilang),    AppTheme.DANGER,  238,  60, 190, 120));
-        content.add(makeStatCard("Barang Ditemukan", String.valueOf(totalDitemukan), AppTheme.SUCCESS, 448,  60, 190, 120));
-        content.add(makeStatCard("Sudah Diklaim", String.valueOf(sudahDiklaim),   AppTheme.ACCENT,  658,  60, 190, 120));
+        // ---- Baris kartu ----
+        lblTotalValue     = new JLabel("0", SwingConstants.CENTER);
+        lblHilangValue    = new JLabel("0", SwingConstants.CENTER);
+        lblDitemukanValue = new JLabel("0", SwingConstants.CENTER);
+        lblDiklaimValue   = new JLabel("0", SwingConstants.CENTER);
+        lblPendingValue   = new JLabel("0", SwingConstants.CENTER);
 
-        // Info panel
-        JPanel infoPanel = makeInfoPanel(
-                totalSaya, totalHilang, totalDitemukan, sudahDiklaim
-        );
-        infoPanel.setBounds(28, 210, 820, 160);
+        // Baris 1: 3 kartu sejajar
+        JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        row1.setOpaque(false);
+        row1.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row1.add(makeStatCard("Total Barang Saya", lblTotalValue,    AppTheme.PRIMARY));
+        row1.add(makeStatCard("Barang Hilang",     lblHilangValue,   AppTheme.DANGER));
+        row1.add(makeStatCard("Barang Ditemukan",  lblDitemukanValue, AppTheme.SUCCESS));
+        content.add(row1);
+        content.add(Box.createVerticalStrut(10));
+
+        // Baris 2: 2 kartu sejajar
+        JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        row2.setOpaque(false);
+        row2.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row2.add(makeStatCard("Klaim Approved", lblDiklaimValue, AppTheme.ACCENT));
+        row2.add(makeStatCard("Klaim Pending",  lblPendingValue, AppTheme.WARNING));
+        content.add(row2);
+        content.add(Box.createVerticalStrut(14));
+
+        // ---- Info detail panel ----
+        infoLabel = new JLabel();
+        infoLabel.setFont(AppTheme.BODY_FONT);
+        infoLabel.setForeground(AppTheme.TEXT_PRIMARY);
+
+        JPanel infoPanel = makeInfoPanelShell(infoLabel);
+        infoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Lebar mengikuti lebar row1 (3 card + gap): 3*175 + 2*10 = 545 + padding
+        infoPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 170));
+        infoPanel.setPreferredSize(new Dimension(600, 170));
         content.add(infoPanel);
+        content.add(Box.createVerticalStrut(12));
 
-        // Refresh button
+        // ---- Refresh button ----
         JButton btnRefresh = AppButtonFactory.primary("Refresh Data");
-        btnRefresh.setBounds(28, 390, 160, 38);
+        btnRefresh.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btnRefresh.setMaximumSize(new Dimension(160, 38));
         content.add(btnRefresh);
-        btnRefresh.addActionListener(e -> {
-            dispose();
-            new StatistikUser(parentFrame).setVisible(true);
-        });
 
-        add(content, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(content);
+        scroll.setBorder(null);
+        scroll.getViewport().setBackground(AppTheme.BACKGROUND);
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        add(scroll, BorderLayout.CENTER);
+
+        btnRefresh.addActionListener(e -> muatData());
+
+        // Load data awal
+        muatData();
     }
 
-    private JPanel makeStatCard(String label, String value, Color color, int x, int y, int w, int h) {
+    /**
+     * Memuat ulang semua angka statistik langsung dari database.
+     * Bisa dipanggil kapan saja tanpa membuat window baru.
+     */
+    private void muatData() {
+        int uid = UserSession.getCurrentUserId();
+        ControllerBarang cb = new ControllerBarang();
+        ControllerClaimRequest ccr = new ControllerClaimRequest();
+
+        int total      = cb.getTotalByUserId(uid);
+        int hilang     = cb.getTotalByUserIdAndStatus(uid, "Hilang");
+        int ditemukan  = cb.getTotalByUserIdAndStatus(uid, "Ditemukan");
+
+        List<ModelClaimRequest> semuaKlaim = ccr.getClaimsByUserId(uid);
+        long approved  = semuaKlaim.stream()
+                .filter(r -> "Approved".equalsIgnoreCase(r.getStatus())).count();
+        long pending   = semuaKlaim.stream()
+                .filter(r -> "Pending".equalsIgnoreCase(r.getStatus())).count();
+
+        lblTotalValue.setText(String.valueOf(total));
+        lblHilangValue.setText(String.valueOf(hilang));
+        lblDitemukanValue.setText(String.valueOf(ditemukan));
+        lblDiklaimValue.setText(String.valueOf(approved));
+        lblPendingValue.setText(String.valueOf(pending));
+
+        String html = "<html><table cellspacing='0' cellpadding='2'>"
+            + "<tr><td>&#8226; Total barang yang pernah Anda daftarkan</td><td>&nbsp;:&nbsp;</td><td><b>" + total     + "</b> barang</td></tr>"
+            + "<tr><td>&#8226; Barang berstatus Hilang</td>               <td>&nbsp;:&nbsp;</td><td><b>" + hilang    + "</b> barang</td></tr>"
+            + "<tr><td>&#8226; Barang berstatus Ditemukan</td>            <td>&nbsp;:&nbsp;</td><td><b>" + ditemukan + "</b> barang</td></tr>"
+            + "<tr><td>&#8226; Pengajuan klaim Anda yang disetujui</td>   <td>&nbsp;:&nbsp;</td><td><b>" + approved  + "</b> klaim</td></tr>"
+            + "<tr><td>&#8226; Pengajuan klaim Anda yang masih menunggu</td><td>&nbsp;:&nbsp;</td><td><b>" + pending  + "</b> klaim</td></tr>"
+            + "</table></html>";
+        infoLabel.setText(html);
+    }
+
+    // Card — ukuran tetap sama (175x120), layout internal pakai setBounds
+    private JPanel makeStatCard(String label, JLabel valueLabel, Color color) {
         JPanel card = new JPanel(null) {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(new Color(0, 0, 0, 14));
-                g2.fill(new RoundRectangle2D.Float(4, 6, w - 8, h - 6, 14, 14));
+                g2.fill(new RoundRectangle2D.Float(4, 6, CARD_W - 8, CARD_H - 6, 14, 14));
                 g2.setColor(AppTheme.SURFACE);
-                g2.fill(new RoundRectangle2D.Float(0, 0, w - 4, h - 4, 14, 14));
+                g2.fill(new RoundRectangle2D.Float(0, 0, CARD_W - 4, CARD_H - 4, 14, 14));
                 g2.setColor(color);
-                g2.fill(new RoundRectangle2D.Float(0, 0, 4, h - 4, 4, 4));
+                g2.fill(new RoundRectangle2D.Float(0, 0, 4, CARD_H - 4, 4, 4));
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-        card.setBounds(x, y, w, h);
+        card.setPreferredSize(new Dimension(CARD_W, CARD_H));
+        card.setMinimumSize(new Dimension(CARD_W, CARD_H));
+        card.setMaximumSize(new Dimension(CARD_W, CARD_H));
         card.setOpaque(false);
 
-        JLabel lblValue = new JLabel(value, SwingConstants.CENTER);
-        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 38));
-        lblValue.setForeground(color);
-        lblValue.setBounds(0, 18, w - 4, 50);
-        card.add(lblValue);
+        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 38));
+        valueLabel.setForeground(color);
+        valueLabel.setBounds(0, 18, CARD_W - 4, 50);
+        card.add(valueLabel);
 
         JLabel lblTitle = new JLabel(label, SwingConstants.CENTER);
         lblTitle.setFont(AppTheme.CARD_TITLE_FONT);
         lblTitle.setForeground(AppTheme.TEXT_PRIMARY);
-        lblTitle.setBounds(0, 70, w - 4, 24);
+        lblTitle.setBounds(0, 70, CARD_W - 4, 24);
         card.add(lblTitle);
 
         return card;
     }
 
-    private JPanel makeInfoPanel(long total, long hilang, long ditemukan, long diklaim) {
+    private JPanel makeInfoPanelShell(JLabel infoLabel) {
         JPanel p = new JPanel(null) {
-            @Override 
+            @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(AppTheme.SURFACE);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth()-1, getHeight()-1, 14, 14));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth() - 1, getHeight() - 1, 14, 14));
                 g2.setColor(AppTheme.BORDER);
                 g2.setStroke(new java.awt.BasicStroke(1));
-                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth()-2, getHeight()-2, 14, 14));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 2, getHeight() - 2, 14, 14));
                 g2.setColor(AppTheme.PRIMARY_LIGHT);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth()-1, 36, 14, 14));
-                g2.fillRect(0, 22, getWidth()-1, 14);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth() - 1, 36, 14, 14));
+                g2.fillRect(0, 22, getWidth() - 1, 14);
                 g2.dispose();
             }
         };
@@ -156,19 +236,9 @@ public class StatistikUser extends AppFrame {
         titleLbl.setBounds(16, 8, 400, 22);
         p.add(titleLbl);
 
-        String[] info = {
-            "• Total barang yang pernah Anda daftarkan  : " + total + " barang",
-            "• Barang berstatus Hilang                  : " + hilang + " barang",
-            "• Barang berstatus Ditemukan               : " + ditemukan + " barang",
-            "• Barang yang sudah berhasil diklaim       : " + diklaim + " barang",
-        };
-        int ty = 50;
-        for (String line : info) {
-            JLabel l = AppLabelFactory.body(line);
-            l.setBounds(16, ty, 780, 22);
-            p.add(l);
-            ty += 26;
-        }
+        infoLabel.setBounds(16, 46, 560, 115);
+        p.add(infoLabel);
+
         return p;
     }
 }

@@ -35,7 +35,6 @@ public class AppCard extends JPanel {
         g2.setStroke(new BasicStroke(1f));
         g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth() - 7, 
                 getHeight() - 7, 16, 16));
-
         g2.dispose();
     }
 

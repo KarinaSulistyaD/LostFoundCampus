@@ -53,4 +53,3 @@ public abstract class AppFrame extends JFrame {
         }
     }
 }
-

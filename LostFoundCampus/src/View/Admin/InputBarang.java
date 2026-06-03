@@ -7,7 +7,6 @@ import View.Component.AppButtonFactory;
 import View.Component.AppFrame;
 import View.Component.AppLabelFactory;
 import View.Component.AppTheme;
-import View.Component.LabeledInput;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
@@ -40,7 +39,14 @@ public class InputBarang extends AppFrame {
         if (hasParentFrame()) {
             JButton btnBackTop = AppButtonFactory.backButton();
             btnBackTop.addActionListener(e -> backToParent());
-            topBar.add(btnBackTop, BorderLayout.EAST);
+            JPanel backWrapper = new JPanel();
+            backWrapper.setLayout(new BoxLayout(backWrapper, BoxLayout.Y_AXIS));
+            backWrapper.setOpaque(false);
+            backWrapper.add(Box.createVerticalGlue());      
+            btnBackTop.setAlignmentX(Component.CENTER_ALIGNMENT);
+            backWrapper.add(btnBackTop);                    
+            backWrapper.add(Box.createVerticalGlue());
+            topBar.add(backWrapper, BorderLayout.EAST);
         }
         add(topBar, BorderLayout.NORTH);
 

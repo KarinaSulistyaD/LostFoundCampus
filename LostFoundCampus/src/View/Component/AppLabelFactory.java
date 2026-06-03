@@ -6,7 +6,7 @@ import javax.swing.*;
 public final class AppLabelFactory {
 
     private AppLabelFactory() {}
-
+    
     public static JLabel title(String text) {
         return create(text, AppTheme.TITLE_FONT, 
                 AppTheme.PRIMARY, JLabel.CENTER);
@@ -20,17 +20,6 @@ public final class AppLabelFactory {
     public static JLabel body(String text) {
         return create(text, AppTheme.BODY_FONT, 
                 AppTheme.TEXT_SECONDARY, JLabel.LEFT);
-    }
-
-    public static JLabel inverseSectionTitle(String text) {
-        return create(text, 
-                AppTheme.SIDEBAR_FONT, new Color(148, 163, 184), JLabel.LEFT);
-    }
-
-    public static JLabel cardTitle(String text) {
-        return create(text, 
-                AppTheme.CARD_TITLE_FONT, 
-                AppTheme.TEXT_ON_PRIMARY, JLabel.CENTER);
     }
 
     public static JLabel create(String text, Font font, Color color, int align) {

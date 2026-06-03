@@ -22,40 +22,31 @@ public class ControllerUser {
         daoUser.insert(user);
     }
     
-    public void register(
-            String nama,
-            String username,
-            String password,
-            String confirm
-    ) {
-
-        if(
-                nama.isEmpty() ||
-                username.isEmpty() ||
-                password.isEmpty() ||
-                confirm.isEmpty()
-        ){
-
-            throw new IllegalArgumentException(
-                    "Semua field harus diisi!"
-            );
+    /**
+     * Mendaftarkan user baru.
+     * Melempar IllegalArgumentException jika ada validasi yang gagal
+     * (field kosong, password tidak cocok, atau username sudah dipakai).
+     */
+    public void register(String nama, String username, String password, String confirm) {
+ 
+        if (nama.isEmpty() || username.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
+            throw new IllegalArgumentException("Semua field harus diisi!");
         }
-
-        if(!password.equals(confirm)){
-
-            throw new IllegalArgumentException(
-                    "Konfirmasi password tidak cocok!"
-            );
+ 
+        if (!password.equals(confirm)) {
+            throw new IllegalArgumentException("Konfirmasi password tidak cocok!");
         }
-
+ 
+        // ── BARU: cek duplikat username ────────────────────────────────────
+        if (daoUser.existsByUsername(username)) {
+            throw new IllegalArgumentException(
+                "Username \"" + username + "\" sudah digunakan. Silakan pilih username lain.");
+        }
+ 
         ModelUser user = new ModelUser();
-
         user.setNama(nama);
-
         user.setUsername(username);
-
         user.setPassword(password);
-
         daoUser.insert(user);
     }
 }

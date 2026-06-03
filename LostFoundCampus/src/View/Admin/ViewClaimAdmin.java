@@ -7,7 +7,6 @@ import View.Component.AppButtonFactory;
 import View.Component.AppFrame;
 import View.Component.AppLabelFactory;
 import View.Component.AppTheme;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -47,7 +46,14 @@ public class ViewClaimAdmin extends AppFrame {
         if (hasParentFrame()) {
             JButton btnBackTop = AppButtonFactory.backButton();
             btnBackTop.addActionListener(e -> backToParent());
-            topBar.add(btnBackTop, BorderLayout.EAST);
+            JPanel backWrapper = new JPanel();
+            backWrapper.setLayout(new BoxLayout(backWrapper, BoxLayout.Y_AXIS));
+            backWrapper.setOpaque(false);
+            backWrapper.add(Box.createVerticalGlue());
+            btnBackTop.setAlignmentX(Component.CENTER_ALIGNMENT);
+            backWrapper.add(btnBackTop);
+            backWrapper.add(Box.createVerticalGlue());
+            topBar.add(backWrapper, BorderLayout.EAST);
         }
         add(topBar, BorderLayout.NORTH);
 
@@ -143,38 +149,25 @@ public class ViewClaimAdmin extends AppFrame {
         }
     }
 
+    // tidak lagi pakai reflection, langsung panggil controller.getAllRequests()
     private void loadRiwayat(DefaultTableModel model) {
         model.setRowCount(0);
-        // Ambil semua claim request dari DB (kita filter non-Pending)
-        // DAOClaimRequest belum punya getAllRequests(), kita pakai query terpisah
-        // Gunakan getAllRequests jika tersedia, jika tidak kita load via DAOClaimRequest
-        try {
-            Model.Claim.DAOClaimRequest dao = new Model.Claim.DAOClaimRequest();
-            // Panggil method yang ada: getPendingRequests() hanya untuk Pending
-            // Untuk Riwayat, kita perlu method getAllRequests — tambahkan di DAOClaimRequest
-            // Sementara, kita load semua lalu filter di sini via reflection workaround:
-            java.lang.reflect.Method m = dao.getClass().getDeclaredMethod("getAllRequests");
-            m.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            List<ModelClaimRequest> all = (List<ModelClaimRequest>) m.invoke(dao);
-            for (ModelClaimRequest r : all) {
-                if (!"Pending".equalsIgnoreCase(r.getStatus())) {
-                    model.addRow(new Object[]{
-                        r.getId(),
-                        r.getBarangId(),
-                        r.getBarangName(),
-                        r.getBarangCategory(),
-                        r.getRequesterName(),
-                        r.getRequesterUsername(),
-                        r.getStatus(),
-                        r.getRequestedAt(),
-                        r.getReviewedAt(),
-                        r.getReviewerName() != null ? r.getReviewerName() : "-"
-                    });
-                }
+        List<ModelClaimRequest> all = controller.getAllRequests();
+        for (ModelClaimRequest r : all) {
+            if (!"Pending".equalsIgnoreCase(r.getStatus())) {
+                model.addRow(new Object[]{
+                    r.getId(),
+                    r.getBarangId(),
+                    r.getBarangName(),
+                    r.getBarangCategory(),
+                    r.getRequesterName(),
+                    r.getRequesterUsername(),
+                    r.getStatus(),
+                    r.getRequestedAt(),
+                    r.getReviewedAt() != null ? r.getReviewedAt() : "-",
+                    r.getReviewerName() != null ? r.getReviewerName() : "-"
+                });
             }
-        } catch (Exception ignored) {
-            // getAllRequests belum ada — tabel riwayat kosong sampai method ditambahkan
         }
     }
 
@@ -184,33 +177,38 @@ public class ViewClaimAdmin extends AppFrame {
             JOptionPane.showMessageDialog(this, "Pilih claim terlebih dahulu!");
             return;
         }
+        String namaBarang = tablePending.getValueAt(row, 2).toString();
+        String pemohon    = tablePending.getValueAt(row, 4).toString();
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Approve klaim \"" + namaBarang + "\" oleh " + pemohon + "?\n"
+                + "Semua klaim lain untuk barang ini akan otomatis di-reject.",
+                "Konfirmasi Approve", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
         int requestId = Integer.parseInt(tablePending.getValueAt(row, 0).toString());
-        int adminId = UserSession.getCurrentUserId();
+        int adminId   = UserSession.getCurrentUserId();
         controller.approveRequest(requestId, adminId);
-        JOptionPane.showMessageDialog(this, "Claim berhasil di-approve!");
+        JOptionPane.showMessageDialog(this, "Klaim berhasil di-approve!");
     }
 
+    // tidak lagi pakai reflection, langsung panggil controller.rejectRequest()
     private void rejectClaim() {
         int row = tablePending.getSelectedRow();
         if (row == -1) {
             JOptionPane.showMessageDialog(this, "Pilih claim terlebih dahulu!");
             return;
         }
-        int requestId = Integer.parseInt(tablePending.getValueAt(row, 0).toString());
-        // Panggil rejectRequest — perlu ditambahkan ke controller & DAO
-        try {
-            Model.Claim.DAOClaimRequest dao = new Model.Claim.DAOClaimRequest();
-            java.lang.reflect.Method m = dao.getClass().getDeclaredMethod("rejectRequest", int.class, int.class);
-            m.setAccessible(true);
-            m.invoke(dao, requestId, UserSession.getCurrentUserId());
-            JOptionPane.showMessageDialog(this, "Claim berhasil di-reject.");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Gagal reject: method rejectRequest belum tersedia di DAOClaimRequest.\n" + ex.getMessage());
-        }
-    }
+        String namaBarang = tablePending.getValueAt(row, 2).toString();
+        String pemohon    = tablePending.getValueAt(row, 4).toString();
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Reject klaim \"" + namaBarang + "\" oleh " + pemohon + "?",
+                "Konfirmasi Reject", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
 
-    // ---- UI helpers ----
+        int requestId = Integer.parseInt(tablePending.getValueAt(row, 0).toString());
+        controller.rejectRequest(requestId, UserSession.getCurrentUserId());
+        JOptionPane.showMessageDialog(this, "Klaim berhasil di-reject.");
+    }
 
     private JPanel makeCardPanel(String title) {
         JPanel outer = new JPanel(new BorderLayout()) {
