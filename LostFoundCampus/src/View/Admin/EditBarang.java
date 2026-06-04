@@ -126,7 +126,7 @@ public class EditBarang extends AppFrame {
         formPanel.add(scrollDeskripsi);
 
         // ---- Tombol Simpan & Batal ----
-        JButton btnSimpan = AppButtonFactory.primary("💾  Simpan Perubahan");
+        JButton btnSimpan = AppButtonFactory.primary("Simpan Perubahan");
         btnSimpan.setBounds(40, 452, 200, 42);
         formPanel.add(btnSimpan);
 

@@ -83,11 +83,11 @@ SELECT 1, 'admin', 'admin123', 'Administrator', 'admin'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 1);
 
 INSERT INTO users (id, username, password, nama, role)
-SELECT 2, 'user1', 'user123', 'Karina Sulistya', 'user'
+SELECT 2, 'user1', 'user123', 'karina s d', 'user'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 2);
 
 INSERT INTO users (id, username, password, nama, role)
-SELECT 3, 'user2', 'user123', 'Lathiva Almasea', 'user'
+SELECT 3, 'user2', 'user123', 'lathiva almasea', 'user'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 3);
 
 -- Seed barang
